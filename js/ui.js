@@ -152,23 +152,30 @@ const UI = (() => {
     const out  = msg.from_user_id === myId;
     const dir  = out ? 'out' : 'in';
     const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    let text, errClass = '';
+
+    let bubble;
+    let hasError = false;
 
     if (msg._decrypted !== undefined) {
-      text = esc(msg._decrypted);
+      if (msg._decrypted.startsWith('IMG::')) {
+        const src = esc(msg._decrypted.slice(5));
+        bubble = `<div class="bubble img-bubble"><img class="msg-image" src="${src}" alt="image" loading="lazy"></div>`;
+      } else {
+        bubble = `<div class="bubble">${esc(msg._decrypted)}</div>`;
+      }
     } else if (msg._error) {
-      text = `⚠ ${esc(msg._error)}`;
-      errClass = ' decrypt-err';
+      bubble = `<div class="bubble decrypt-err">⚠ ${esc(msg._error)}</div>`;
+      hasError = true;
     } else {
-      text = '<em style="opacity:.5">Decrypting…</em>';
+      bubble = `<div class="bubble"><em style="opacity:.5">Decrypting…</em></div>`;
     }
 
     return `
       <div class="msg-row ${dir}" data-id="${esc(msg.id)}">
-        <div class="bubble${errClass}">${text}</div>
+        ${bubble}
         <div class="msg-meta">
           <span class="msg-time">${time}</span>
-          ${!msg._error ? '<span class="lock-tick">🔒</span>' : ''}
+          ${!hasError ? '<span class="lock-tick">🔒</span>' : ''}
         </div>
       </div>`;
   }

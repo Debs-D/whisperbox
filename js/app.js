@@ -3,6 +3,18 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
+const EMOJI_CATS = [
+  { icon: '😀', name: 'Smileys', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','😎','🤩','🥳','😏','😒','😔','😢','😭','😤','😠','😡','😱','😨','😳','🥺','🤗','🤭','🤫','🤔','😐','😶','🙄','😬','😴','🤢','🤧','🥴','💀','💩','🤡','👻','👽'] },
+  { icon: '👋', name: 'People',  emojis: ['👋','🤚','✋','👌','✌️','🤞','👍','👎','✊','👊','👏','🙌','🤝','🙏','💪','🦾','💅','🫶','👀','👅','👂','👃','💋','💔','💕','💖','💗','💙','💚','💛','🧡','💜','🖤','💯','💥','💫','💬','💭','🎵','🎶'] },
+  { icon: '🐶', name: 'Animals', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🦆','🦅','🦉','🦇','🐺','🐴','🦄','🐝','🦋','🐌','🐞','🐢','🐍','🦎','🐙','🦈','🐳','🐬','🦭','🐟','🐠','🦐','🦞','🦀'] },
+  { icon: '🍎', name: 'Food',    emojis: ['🍎','🍊','🍋','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🥑','🍆','🥦','🌽','🥕','🧄','🥔','🍞','🥐','🧀','🍳','🥞','🧇','🥓','🍗','🍔','🍟','🍕','🌮','🌯','🥙','🍱','🍣','🍜','🍝','🥗','🍿','🧁','🍰','🎂','🍩','🍪','🍫','🍬','🍭','☕','🧃','🥤','🍺','🍷','🥂'] },
+  { icon: '⚽', name: 'Activity',emojis: ['⚽','🏀','🏈','⚾','🎾','🏐','🎱','🏓','🏸','⛳','🎯','🎮','🕹','🎲','🎰','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🎻','🏆','🥇','🥈','🥉','🏅','🎖','🏵','🎗','🎟','🎫','🎪'] },
+  { icon: '🚗', name: 'Travel',  emojis: ['🚗','🚕','🚙','🚌','🚑','🚒','🚓','🚲','🛴','🛵','🏍','🛻','⛽','🚧','⚓','⛵','🛶','🚤','🚢','✈️','🛩','🚀','🛸','🚁','🌍','🌎','🌏','🗺','🏔','⛰','🌋','🏕','🏖','🏜','🏝','🌆','🌇','🌉','🌌','🌈'] },
+  { icon: '💡', name: 'Objects', emojis: ['💡','🔦','🕯','📱','💻','⌨️','🖥','🖨','🖱','💾','💿','📷','📸','📹','🎥','📺','📻','📞','☎️','📡','🔋','🔌','📖','📚','📰','📋','📌','📍','✂️','📦','✉️','📧','🔑','🗝','🔒','🔓','🔨','⚙️','🔧','🔩','🧲','⚗️','🔭','🔬','💊','🩹','💰','💳','💎','⏰','⌚','⏳','🧸'] },
+];
+
+let _emojiCatIdx = 0;
+
 const SUN_ICON  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
 const MOON_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 
@@ -161,6 +173,9 @@ async function enterApp() {
   UI.showView('app');
   UI.stampAvatar($('current-user-avatar'), user.display_name || user.username);
   $('current-user-name').textContent = user.display_name || user.username;
+
+  const savedPfp = localStorage.getItem('wb_pfp');
+  if (savedPfp) applyCustomAvatar($('current-user-avatar'), savedPfp);
 
   bindAppUI();
   initSocket();
@@ -323,6 +338,10 @@ function bindAppUI() {
   });
 
   sendBtn.addEventListener('click', handleSend);
+
+  initEmojiPicker();
+  initMediaInput();
+  initProfilePic();
 }
 
 async function loadConversations() {
@@ -458,7 +477,12 @@ function openProfile() {
   if (!user) return;
 
   const $ = UI.$;
-  UI.stampAvatar($('profile-avatar'), user.display_name || user.username);
+  const savedPfp = localStorage.getItem('wb_pfp');
+  if (savedPfp) {
+    applyCustomAvatar($('profile-avatar'), savedPfp);
+  } else {
+    UI.stampAvatar($('profile-avatar'), user.display_name || user.username);
+  }
   $('profile-display-name').textContent = user.display_name || user.username;
   $('profile-username-label').textContent = '@' + user.username;
 
@@ -479,6 +503,175 @@ function friendlyError(err, fallback) {
   const msg = err?.message || '';
   if (msg.length > 0 && msg.length < 120) return msg;
   return fallback || 'Something went wrong — please try again.';
+}
+
+function initEmojiPicker() {
+  const $ = UI.$;
+  const emojiBtn = $('emoji-btn');
+  const picker   = $('emoji-picker');
+  const catsEl   = $('emoji-cats');
+  const input    = $('message-input');
+  if (!emojiBtn || !picker) return;
+
+  catsEl.innerHTML = EMOJI_CATS.map((cat, i) =>
+    `<button class="emoji-cat${i === 0 ? ' active' : ''}" data-idx="${i}" title="${cat.name}">${cat.icon}</button>`
+  ).join('');
+
+  renderEmojiGrid(0);
+
+  catsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.emoji-cat');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    _emojiCatIdx = idx;
+    catsEl.querySelectorAll('.emoji-cat').forEach((b, i) => b.classList.toggle('active', i === idx));
+    renderEmojiGrid(idx);
+  });
+
+  $('emoji-grid').addEventListener('click', (e) => {
+    const btn = e.target.closest('.emoji-item');
+    if (!btn) return;
+    insertEmoji(btn.textContent, input);
+  });
+
+  emojiBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    picker.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!picker.classList.contains('hidden') && !picker.contains(e.target) && e.target !== emojiBtn) {
+      picker.classList.add('hidden');
+    }
+  });
+}
+
+function renderEmojiGrid(idx) {
+  document.getElementById('emoji-grid').innerHTML =
+    EMOJI_CATS[idx].emojis.map((em) => `<button class="emoji-item">${em}</button>`).join('');
+}
+
+function insertEmoji(emoji, input) {
+  const start = input.selectionStart;
+  const end   = input.selectionEnd;
+  input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
+  input.selectionStart = input.selectionEnd = start + emoji.length;
+  input.dispatchEvent(new Event('input'));
+  input.focus();
+}
+
+function resizeImage(file, maxW, maxH) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = maxW; canvas.height = maxH;
+        const ctx = canvas.getContext('2d');
+        const scale = Math.max(maxW / img.width, maxH / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (maxW - w) / 2, (maxH - h) / 2, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function initMediaInput() {
+  const attachBtn = UI.$('attach-btn');
+  const fileInput = UI.$('media-input');
+  if (!attachBtn || !fileInput) return;
+
+  attachBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    fileInput.value = '';
+    if (file.size > 1.5 * 1024 * 1024) {
+      UI.toast('Image too large — max 1.5 MB', 'error');
+      return;
+    }
+    try {
+      const dataUrl = await resizeImage(file, 800, 800);
+      await sendMediaMessage(dataUrl);
+    } catch {
+      UI.toast('Could not process image', 'error');
+    }
+  });
+}
+
+async function sendMediaMessage(dataUrl) {
+  const active = Store.get('activeConversation');
+  if (!active) return;
+
+  const { userId } = active;
+  const myId = Store.get('user').id;
+  const text = 'IMG::' + dataUrl;
+
+  try {
+    let recipientPubKey = Store.getPeerKey(userId);
+    if (!recipientPubKey) {
+      const keyData = await API.getUserPublicKey(userId);
+      recipientPubKey = await Crypto.importPublicKey(keyData.public_key);
+      Store.cachePeerKey(userId, recipientPubKey);
+    }
+
+    const senderPubKey = Store.get('publicKey');
+    const payload = await Crypto.encryptMessage(text, recipientPubKey, senderPubKey);
+
+    if (Socket.send(userId, payload)) {
+      const sent = {
+        id: 'local-' + Date.now(), from_user_id: myId, to_user_id: userId,
+        payload, delivered: false, created_at: new Date().toISOString(), _decrypted: text,
+      };
+      Store.addMessage(userId, sent);
+      UI.appendMsg(sent, myId);
+    } else {
+      const msg = await API.sendMessage(userId, payload);
+      const sent = { ...msg, _decrypted: text };
+      Store.addMessage(userId, sent);
+      UI.appendMsg(sent, myId);
+    }
+    loadConversations();
+  } catch (err) {
+    UI.toast('Failed to send image: ' + friendlyError(err), 'error');
+  }
+}
+
+function applyCustomAvatar(el, dataUrl) {
+  if (!el) return;
+  el.textContent = '';
+  el.style.backgroundImage    = `url(${dataUrl})`;
+  el.style.backgroundSize     = 'cover';
+  el.style.backgroundPosition = 'center';
+}
+
+function initProfilePic() {
+  const wrap      = UI.$('profile-avatar-wrap');
+  const fileInput = UI.$('pfp-input');
+  if (!wrap || !fileInput) return;
+
+  wrap.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    fileInput.value = '';
+    try {
+      const dataUrl = await resizeImage(file, 200, 200);
+      localStorage.setItem('wb_pfp', dataUrl);
+      applyCustomAvatar(UI.$('profile-avatar'), dataUrl);
+      applyCustomAvatar(UI.$('current-user-avatar'), dataUrl);
+      UI.toast('Profile photo updated', 'success');
+    } catch {
+      UI.toast('Could not update photo', 'error');
+    }
+  });
 }
 
 boot();
